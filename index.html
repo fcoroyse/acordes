@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acordes de guitarra</title>
+<style>
+  :root{
+    --ebony:#141010;
+    --rosewood:#2E1F19;
+    --nickel:#9AA0A6;
+    --bone:#F1EADB;
+    --pearl:#EFF3F0;
+    --abalone:#74A896;
+    --brass:#C0964E;
+    --ink:#0E0B0A;
+    --muted:#8B7F76;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(120% 60% at 50% 0%, #241A16 0%, var(--ebony) 60%),
+      var(--ebony);
+    color:var(--bone);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:460px;margin:0 auto;padding:22px 18px 56px}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:26px}
+  header h1{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:19px;font-weight:400;letter-spacing:.01em;margin:0;color:var(--bone)
+  }
+  header p{margin:0;font-size:12.5px;color:var(--muted)}
+
+  .stage{text-align:center}
+  .symbol{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:58px;line-height:1;font-weight:400;letter-spacing:-.01em;
+    margin:0;color:var(--bone);
+  }
+  .symbol .q{font-size:34px;color:var(--brass);margin-left:2px}
+  .spoken{
+    font-family:"Iowan Old Style",Palatino,Georgia,serif;font-style:italic;
+    font-size:15px;color:var(--muted);margin:8px 0 0
+  }
+  .tones{
+    margin:14px 0 4px;font-size:13px;color:var(--abalone);
+    letter-spacing:.22em;
+  }
+
+  .board-shell{margin:14px 0 4px}
+  svg.board{width:100%;height:auto;display:block;max-width:340px;margin:0 auto}
+
+  .voicing{
+    display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px
+  }
+  .voicing button{
+    background:none;border:1px solid rgba(154,160,166,.32);color:var(--bone);
+    width:34px;height:34px;border-radius:50%;font-size:16px;line-height:1;cursor:pointer;
+    display:grid;place-items:center;
+  }
+  .voicing button:disabled{opacity:.28;cursor:default}
+  .voicing span{
+    font-size:12.5px;color:var(--muted);min-width:168px;
+  }
+
+  .listen{
+    margin:16px auto 0;display:block;
+    background:linear-gradient(180deg,#F5F0E4,#DED6C4);
+    color:var(--ink);border:none;border-radius:999px;
+    padding:13px 30px;font-size:15px;font-weight:600;letter-spacing:.01em;cursor:pointer;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px rgba(0,0,0,.35);
+  }
+  .listen:active{transform:translateY(1px)}
+
+  hr.rule{border:none;border-top:1px solid rgba(154,160,166,.16);margin:32px 0 22px}
+
+  .field{margin-bottom:22px}
+  .field h2{
+    font-family:"Iowan Old Style",Palatino,Georgia,serif;font-style:italic;font-weight:400;
+    font-size:14px;color:var(--muted);margin:0 0 10px
+  }
+  .roots{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+  .types{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{
+    background:transparent;border:1px solid rgba(154,160,166,.3);
+    color:var(--bone);border-radius:10px;padding:9px 6px;font-size:14px;
+    cursor:pointer;font-family:inherit;
+  }
+  .types .chip{padding:9px 13px;border-radius:999px}
+  .chip:hover{border-color:rgba(241,234,219,.55)}
+  .chip[aria-pressed="true"]{
+    background:var(--bone);color:var(--ink);border-color:var(--bone);font-weight:600
+  }
+  .chip:focus-visible,.voicing button:focus-visible,.listen:focus-visible{
+    outline:2px solid var(--abalone);outline-offset:2px
+  }
+  .empty{font-size:13.5px;color:var(--muted);text-align:center;padding:26px 10px;line-height:1.6}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Acordes de guitarra</h1>
+    <p>Afinación estándar</p>
+  </header>
+
+  <section class="stage">
+    <h2 class="symbol" id="symbol">C</h2>
+    <p class="spoken" id="spoken">Do mayor</p>
+    <p class="tones" id="tones">C E G</p>
+
+    <div class="board-shell" id="board"></div>
+
+    <div class="voicing">
+      <button id="prev" aria-label="Posición anterior">‹</button>
+      <span id="vlabel">Posición abierta</span>
+      <button id="next" aria-label="Posición siguiente">›</button>
+    </div>
+
+    <button class="listen" id="listen">Escuchar</button>
+  </section>
+
+  <hr class="rule">
+
+  <div class="field">
+    <h2>Nota raíz</h2>
+    <div class="roots" id="roots"></div>
+  </div>
+
+  <div class="field">
+    <h2>Tipo de acorde</h2>
+    <div class="types" id="typelist"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- teoría ---------- */
+const NOTES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const SPANISH = ['Do','Do sostenido','Re','Mi bemol','Mi','Fa','Fa sostenido','Sol','La bemol','La','Si bemol','Si'];
+
+const TYPES = [
+  {k:'major', label:'mayor',  sfx:'',       word:'mayor',                intervals:[0,4,7]},
+  {k:'minor', label:'menor',  sfx:'m',      word:'menor',                intervals:[0,3,7]},
+  {k:'dom7',  label:'7',      sfx:'7',      word:'con séptima',          intervals:[0,4,7,10]},
+  {k:'min7',  label:'m7',     sfx:'m7',     word:'menor con séptima',    intervals:[0,3,7,10]},
+  {k:'maj7',  label:'maj7',   sfx:'maj7',   word:'con séptima mayor',    intervals:[0,4,7,11]},
+  {k:'sus2',  label:'sus2',   sfx:'sus2',   word:'con segunda suspendida',intervals:[0,2,7]},
+  {k:'sus4',  label:'sus4',   sfx:'sus4',   word:'con cuarta suspendida',intervals:[0,5,7]},
+  {k:'7sus4', label:'7sus4',  sfx:'7sus4',  word:'séptima suspendida',   intervals:[0,5,7,10]},
+  {k:'six',   label:'6',      sfx:'6',      word:'con sexta',            intervals:[0,4,7,9]},
+  {k:'min6',  label:'m6',     sfx:'m6',     word:'menor con sexta',      intervals:[0,3,7,9]},
+  {k:'nine',  label:'9',      sfx:'9',      word:'con novena',           intervals:[0,4,7,10,2]},
+  {k:'add9',  label:'add9',   sfx:'add9',   word:'con novena añadida',   intervals:[0,4,7,2]},
+  {k:'dim',   label:'dim',    sfx:'dim',    word:'disminuido',           intervals:[0,3,6]},
+  {k:'dim7',  label:'dim7',   sfx:'dim7',   word:'séptima disminuida',   intervals:[0,3,6,9]},
+  {k:'aug',   label:'aug',    sfx:'aug',    word:'aumentado',            intervals:[0,4,8]},
+  {k:'m7b5',  label:'m7♭5',   sfx:'m7♭5',   word:'semidisminuido',       intervals:[0,3,6,10]},
+  {k:'five',  label:'5',      sfx:'5',      word:'quinta (power chord)', intervals:[0,7]}
+];
+
+/* rel: desplazamiento respecto al traste de la fundamental. null = cuerda al aire muteada */
+const SHAPES = {
+  E: { openPC:4, label:'Cejilla en la 6ª cuerda', types:{
+    major:{rel:[0,2,2,1,0,0], fing:[1,3,4,2,1,1], openFing:[0,2,3,1,0,0]},
+    minor:{rel:[0,2,2,0,0,0], fing:[1,3,4,1,1,1], openFing:[0,2,3,0,0,0]},
+    dom7: {rel:[0,2,0,1,0,0], fing:[1,3,1,2,1,1], openFing:[0,2,0,1,0,0]},
+    min7: {rel:[0,2,0,0,0,0], fing:[1,3,1,1,1,1], openFing:[0,2,0,0,0,0]},
+    maj7: {rel:[0,2,1,1,0,0], fing:[1,4,2,3,1,1], openFing:[0,3,1,2,0,0]},
+    sus4: {rel:[0,2,2,2,0,0], fing:[1,2,3,4,1,1], openFing:[0,1,2,3,0,0]},
+    five: {rel:[0,2,2,null,null,null], fing:[1,3,4,0,0,0], openFing:[0,1,3,0,0,0]}
+  }},
+  A: { openPC:9, label:'Cejilla en la 5ª cuerda', types:{
+    major:{rel:[null,0,2,2,2,0], fing:[0,1,3,3,3,1], openFing:[0,0,1,2,3,0]},
+    minor:{rel:[null,0,2,2,1,0], fing:[0,1,3,4,2,1], openFing:[0,0,2,3,1,0]},
+    dom7: {rel:[null,0,2,0,2,0], fing:[0,1,3,1,4,1], openFing:[0,0,2,0,3,0]},
+    min7: {rel:[null,0,2,0,1,0], fing:[0,1,3,1,2,1], openFing:[0,0,2,0,1,0]},
+    maj7: {rel:[null,0,2,1,2,0], fing:[0,1,3,2,4,1], openFing:[0,0,2,1,3,0]},
+    sus2: {rel:[null,0,2,2,0,0], fing:[0,1,3,4,1,1], openFing:[0,0,1,2,0,0]},
+    sus4: {rel:[null,0,2,2,3,0], fing:[0,1,2,3,4,1], openFing:[0,0,1,2,3,0]},
+    '7sus4':{rel:[null,0,2,0,3,0], fing:[0,1,3,1,4,1], openFing:[0,0,2,0,3,0]},
+    six:  {rel:[null,0,2,2,2,2], fing:[0,1,3,3,3,3], openFing:[0,0,1,2,3,4]},
+    min6: {rel:[null,0,4,2,1,null], fing:[0,1,4,3,2,0], minBase:1},
+    nine: {rel:[null,0,-1,0,0,0], fing:[0,2,1,3,3,3], minBase:1, barre:{rel:0,from:3,to:5}},
+    add9: {rel:[null,0,-1,2,0,0], fing:[0,2,1,4,3,3], minBase:1, barre:{rel:0,from:4,to:5}},
+    dim:  {rel:[null,0,1,2,1,null], fing:[0,1,2,4,3,0], openFing:[0,0,1,3,2,0]},
+    dim7: {rel:[null,0,1,-1,1,null], fing:[0,2,3,1,4,0], minBase:1, period:3},
+    aug:  {rel:[null,0,3,2,2,1], fing:[0,1,4,3,3,2], openFing:[0,0,4,3,2,1]},
+    m7b5: {rel:[null,0,1,0,1,null], fing:[0,1,2,1,3,0], openFing:[0,0,2,0,3,0]},
+    five: {rel:[null,0,2,2,null,null], fing:[0,1,3,4,0,0], openFing:[0,0,1,2,0,0]}
+  }}
+};
+
+/* voicings abiertos preferidos: "raíz|tipo" */
+const OPEN = {
+  '0|major':{frets:[-1,3,2,0,1,0], fingers:[0,3,2,0,1,0]},
+  '0|maj7' :{frets:[-1,3,2,0,0,0], fingers:[0,3,2,0,0,0]},
+  '0|dom7' :{frets:[-1,3,2,3,1,0], fingers:[0,3,2,4,1,0]},
+  '0|add9' :{frets:[-1,3,2,0,3,0], fingers:[0,2,1,0,4,0]},
+  '0|sus2' :{frets:[-1,3,0,0,3,3], fingers:[0,2,0,0,3,4]},
+  '0|sus4' :{frets:[-1,3,3,0,1,1], fingers:[0,2,3,0,1,1]},
+  '2|major':{frets:[-1,-1,0,2,3,2], fingers:[0,0,0,1,3,2]},
+  '2|minor':{frets:[-1,-1,0,2,3,1], fingers:[0,0,0,2,3,1]},
+  '2|dom7' :{frets:[-1,-1,0,2,1,2], fingers:[0,0,0,3,1,2]},
+  '2|min7' :{frets:[-1,-1,0,2,1,1], fingers:[0,0,0,2,1,1]},
+  '2|maj7' :{frets:[-1,-1,0,2,2,2], fingers:[0,0,0,1,2,3]},
+  '2|sus2' :{frets:[-1,-1,0,2,3,0], fingers:[0,0,0,1,2,0]},
+  '2|sus4' :{frets:[-1,-1,0,2,3,3], fingers:[0,0,0,1,2,3]},
+  '2|six'  :{frets:[-1,-1,0,2,0,2], fingers:[0,0,0,2,0,3]},
+  '4|min6' :{frets:[0,2,2,0,2,0], fingers:[0,2,3,0,4,0]},
+  '4|six'  :{frets:[0,2,2,1,2,0], fingers:[0,2,3,1,4,0]},
+  '5|maj7' :{frets:[-1,-1,3,2,1,0], fingers:[0,0,3,2,1,0]},
+  '7|major':{frets:[3,2,0,0,0,3], fingers:[2,1,0,0,0,3]},
+  '7|dom7' :{frets:[3,2,0,0,0,1], fingers:[3,2,0,0,0,1]},
+  '7|maj7' :{frets:[3,2,0,0,0,2], fingers:[3,1,0,0,0,2]},
+  '7|sus4' :{frets:[3,3,0,0,1,3], fingers:[2,3,0,0,1,4]},
+  '9|nine' :{frets:[-1,0,2,4,2,3], fingers:[0,0,1,3,2,4]},
+  '9|add9' :{frets:[-1,0,2,4,2,0], fingers:[0,0,1,3,2,0]},
+  '9|min6' :{frets:[-1,0,2,2,1,2], fingers:[0,0,2,3,1,4]},
+  '11|dom7':{frets:[-1,2,1,2,0,2], fingers:[0,3,1,2,0,4]}
+};
+
+function fromShape(key, typeKey, rootPC){
+  const sh = SHAPES[key], t = sh.types[typeKey];
+  if(!t) return null;
+  const period = t.period || 12, minBase = t.minBase || 0;
+  let base = (rootPC - sh.openPC + 12) % 12;
+  while(base < minBase) base += period;
+  if(base > 11) return null;
+  const frets = t.rel.map(r => r === null ? -1 : r + base);
+  if(frets.some(f => f < -1)) return null;
+  const fingers = (base === 0 && t.openFing) ? t.openFing.slice() : t.fing.slice();
+  let barre = null;
+  if(base > 0){
+    if(t.barre){
+      barre = {fret: base + t.barre.rel, from: t.barre.from, to: t.barre.to};
+    } else {
+      const idx = frets.map((f,i)=>[f,i]).filter(([f,i])=> f===base && fingers[i]===1).map(([,i])=>i);
+      if(idx.length > 1) barre = {fret: base, from: Math.min(...idx), to: Math.max(...idx)};
+    }
+  }
+  return {frets, fingers, barre, base, label: base === 0 ? 'Posición abierta' : sh.label};
+}
+
+function voicingsFor(rootPC, typeKey){
+  const out = [];
+  const seen = new Set();
+  const push = v => { if(!v) return; const id = v.frets.join(','); if(seen.has(id)) return; seen.add(id); out.push(v); };
+
+  const openEntry = OPEN[rootPC + '|' + typeKey];
+  if(openEntry) push({
+    frets: openEntry.frets.slice(), fingers: openEntry.fingers.slice(),
+    barre:null, base: Math.min(...openEntry.frets.filter(f=>f>0), 0), label:'Posición abierta'
+  });
+  const cands = [fromShape('E', typeKey, rootPC), fromShape('A', typeKey, rootPC)]
+    .filter(Boolean).sort((a,b)=> a.base - b.base);
+  cands.forEach(push);
+  return out;
+}
+
+/* ---------- diagrama ---------- */
+const XS = i => 55 + i * 42;
+const TOP = 66, FH = 50;
+const OPEN_STR = ['E','A','D','G','B','E'];
+
+function drawBoard(v){
+  const played = v.frets.filter(f => f > 0);
+  const maxF = played.length ? Math.max(...played) : 1;
+  const minF = played.length ? Math.min(...played) : 1;
+  const start = (maxF <= 5) ? 1 : minF;
+  const nut = start === 1;
+  const y = k => TOP + k * FH;
+  const yDot = n => TOP + FH * (n - 0.5);
+
+  let s = `<svg class="board" viewBox="0 0 320 372" role="img" aria-label="Diagrama del acorde">
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3B2820"/><stop offset="55%" stop-color="#2C1D17"/><stop offset="100%" stop-color="#221611"/>
+    </linearGradient>
+    <linearGradient id="wire" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6E747A"/><stop offset="45%" stop-color="#CFD4D8"/><stop offset="100%" stop-color="#7E848A"/>
+    </linearGradient>
+    <radialGradient id="inlay" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#FFFFFF"/><stop offset="55%" stop-color="#EAF0EC"/><stop offset="100%" stop-color="#C3CFC9"/>
+    </radialGradient>
+  </defs>
+  <rect x="39" y="${TOP - (nut?9:0)}" width="242" height="${250 + (nut?9:0)}" rx="4" fill="url(#wood)"/>`;
+
+  // trastes
+  for(let k = nut ? 1 : 0; k <= 5; k++){
+    s += `<rect x="39" y="${y(k)-1.6}" width="242" height="3.2" fill="url(#wire)" opacity=".95"/>`;
+  }
+  if(nut) s += `<rect x="39" y="${TOP-9}" width="242" height="9" rx="2" fill="#EDE4D2"/>`;
+  else s += `<text x="30" y="${yDot(1)+5}" text-anchor="end" font-family="Iowan Old Style,Palatino,Georgia,serif" font-size="16" fill="#9AA0A6">${start}</text>`;
+
+  // cuerdas
+  for(let i = 0; i < 6; i++){
+    const w = 2.4 - i * 0.26;
+    s += `<line x1="${XS(i)}" y1="${TOP-(nut?9:0)}" x2="${XS(i)}" y2="${y(5)}" stroke="#B6BBC0" stroke-width="${w.toFixed(2)}" opacity=".85"/>`;
+  }
+
+  // marcadores al aire / muteadas
+  for(let i = 0; i < 6; i++){
+    const f = v.frets[i];
+    if(f === -1){
+      const x = XS(i), r = 5.5;
+      s += `<g stroke="#8B7F76" stroke-width="2" stroke-linecap="round">
+        <line x1="${x-r}" y1="${44-r}" x2="${x+r}" y2="${44+r}"/><line x1="${x+r}" y1="${44-r}" x2="${x-r}" y2="${44+r}"/></g>`;
+    } else if(f === 0){
+      s += `<circle cx="${XS(i)}" cy="44" r="6.2" fill="none" stroke="#EDE4D2" stroke-width="2"/>`;
+    }
+  }
+
+  // cejilla
+  if(v.barre && v.barre.fret >= start && v.barre.fret < start + 5){
+    const n = v.barre.fret - start + 1;
+    const x1 = XS(v.barre.from), x2 = XS(v.barre.to);
+    s += `<rect x="${x1-13}" y="${yDot(n)-13}" width="${x2-x1+26}" height="26" rx="13" fill="url(#inlay)"/>`;
+  }
+
+  // dedos
+  for(let i = 0; i < 6; i++){
+    const f = v.frets[i];
+    if(f <= 0) continue;
+    const n = f - start + 1;
+    if(n < 1 || n > 5) continue;
+    const inBarre = v.barre && v.barre.fret === f && i >= v.barre.from && i <= v.barre.to;
+    if(!inBarre) s += `<circle cx="${XS(i)}" cy="${yDot(n)}" r="13" fill="url(#inlay)"/>`;
+    const fin = v.fingers[i];
+    if(fin) s += `<text x="${XS(i)}" y="${yDot(n)+5}" text-anchor="middle" font-size="14" font-weight="600" fill="#22160F" font-family="-apple-system,Helvetica,Arial,sans-serif">${fin}</text>`;
+  }
+
+  // nombres de cuerdas
+  for(let i = 0; i < 6; i++){
+    s += `<text x="${XS(i)}" y="${y(5)+26}" text-anchor="middle" font-size="12" fill="#7A6E66" font-family="-apple-system,Helvetica,Arial,sans-serif">${OPEN_STR[i]}</text>`;
+  }
+  return s + '</svg>';
+}
+
+/* ---------- audio (cuerda pulsada, Karplus–Strong) ---------- */
+let ctx = null, out = null;
+const cache = new Map();
+const MIDI0 = [40,45,50,55,59,64];
+
+function ensureAudio(){
+  if(ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 4200;
+  const g = ctx.createGain(); g.gain.value = 0.22;
+  lp.connect(g).connect(ctx.destination);
+  out = lp;
+}
+function buffer(midi){
+  if(cache.has(midi)) return cache.get(midi);
+  const sr = ctx.sampleRate, freq = 440 * Math.pow(2, (midi - 69) / 12);
+  const N = Math.max(2, Math.round(sr / freq));
+  const len = Math.floor(sr * 2.4);
+  const buf = ctx.createBuffer(1, len, sr);
+  const d = buf.getChannelData(0);
+  let prev = 0;
+  for(let i = 0; i <= N; i++){ prev = 0.5 * (Math.random() * 2 - 1) + 0.5 * prev; d[i] = prev; }
+  for(let i = N + 1; i < len; i++) d[i] = 0.4985 * (d[i-N] + d[i-N-1]);
+  const fade = Math.floor(sr * 0.35);
+  let peak = 0;
+  for(let i = 0; i < len; i++) peak = Math.max(peak, Math.abs(d[i]));
+  const k = peak > 0 ? 0.9 / peak : 1;
+  for(let i = 0; i < len; i++){
+    let a = d[i] * k;
+    if(i > len - fade) a *= (len - i) / fade;
+    d[i] = a;
+  }
+  cache.set(midi, buf);
+  return buf;
+}
+function strum(v){
+  ensureAudio();
+  if(ctx.state === 'suspended') ctx.resume();
+  let t = ctx.currentTime + 0.03, step = 0;
+  for(let i = 0; i < 6; i++){
+    const f = v.frets[i];
+    if(f < 0) continue;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer(MIDI0[i] + f);
+    const g = ctx.createGain();
+    g.gain.value = 0.85 + Math.random() * 0.2;
+    src.connect(g).connect(out);
+    src.start(t + step * 0.042);
+    step++;
+  }
+}
+
+/* ---------- estado e interfaz ---------- */
+let root = 0, type = 'major', idx = 0, list = [];
+
+const $ = id => document.getElementById(id);
+
+function build(){
+  $('roots').innerHTML = NOTES.map((n,i)=>
+    `<button class="chip" aria-pressed="${i===root}" data-root="${i}">${n}</button>`).join('');
+  $('typelist').innerHTML = TYPES.map(t=>
+    `<button class="chip" aria-pressed="${t.k===type}" data-type="${t.k}">${t.label}</button>`).join('');
+}
+
+function render(){
+  const t = TYPES.find(x => x.k === type);
+  $('symbol').innerHTML = NOTES[root] + (t.sfx ? `<span class="q">${t.sfx}</span>` : '');
+  $('spoken').textContent = SPANISH[root] + ' ' + t.word;
+  $('tones').textContent = t.intervals.map(i => NOTES[(root + i) % 12]).join('  ');
+
+  list = voicingsFor(root, type);
+  if(idx >= list.length) idx = 0;
+
+  if(!list.length){
+    $('board').innerHTML = `<p class="empty">Todavía no tengo una digitación para este acorde.<br>Prueba con otro tipo.</p>`;
+    $('vlabel').textContent = '';
+    $('prev').disabled = $('next').disabled = true;
+    $('listen').disabled = true;
+    return;
+  }
+  const v = list[idx];
+  $('board').innerHTML = drawBoard(v);
+  $('vlabel').textContent = list.length > 1
+    ? `${v.label} · ${idx + 1} de ${list.length}`
+    : v.label;
+  $('prev').disabled = $('next').disabled = list.length < 2;
+  $('listen').disabled = false;
+
+  document.querySelectorAll('[data-root]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.root === root));
+  document.querySelectorAll('[data-type]').forEach(b => b.setAttribute('aria-pressed', b.dataset.type === type));
+}
+
+document.addEventListener('click', e => {
+  const r = e.target.closest('[data-root]');
+  const t = e.target.closest('[data-type]');
+  if(r){ root = +r.dataset.root; idx = 0; render(); }
+  else if(t){ type = t.dataset.type; idx = 0; render(); }
+});
+$('prev').onclick = () => { idx = (idx - 1 + list.length) % list.length; render(); };
+$('next').onclick = () => { idx = (idx + 1) % list.length; render(); };
+$('listen').onclick = () => { if(list[idx]) strum(list[idx]); };
+
+build();
+render();
+</script>
+</body>
+</html>
