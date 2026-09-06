@@ -29,12 +29,19 @@
   }
   .wrap{max-width:460px;margin:0 auto;padding:22px 18px 56px}
 
-  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:26px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:26px}
   header h1{
     font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
     font-size:19px;font-weight:400;letter-spacing:.01em;margin:0;color:var(--bone)
   }
-  header p{margin:0;font-size:12.5px;color:var(--muted)}
+
+  .notation{display:flex;border:1px solid rgba(154,160,166,.28);border-radius:999px;overflow:hidden;flex:none}
+  .notation button{
+    background:none;border:none;color:var(--muted);font-family:inherit;font-size:11.5px;
+    padding:6px 12px;cursor:pointer;letter-spacing:.03em
+  }
+  .notation button[aria-pressed="true"]{background:var(--bone);color:var(--ink);font-weight:600}
+  .notation button:focus-visible{outline:2px solid var(--abalone);outline-offset:-2px}
 
   .stage{text-align:center}
   .symbol{
@@ -117,7 +124,10 @@
 <div class="wrap">
   <header>
     <h1>Acordes de guitarra</h1>
-    <p>Afinación estándar</p>
+    <div class="notation">
+      <button data-not="en" aria-pressed="true">C D E</button>
+      <button data-not="es" aria-pressed="false">Do Re Mi</button>
+    </div>
   </header>
 
   <section class="stage">
@@ -184,6 +194,9 @@
 <script>
 /* ---------- teoría ---------- */
 const NOTES = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const NOTES_ES = ['Do','Do♯','Re','Mi♭','Mi','Fa','Fa♯','Sol','La♭','La','Si♭','Si'];
+let notation = 'en';
+const nm = pc => (notation === 'es' ? NOTES_ES : NOTES)[pc];
 const SPANISH = ['Do','Do sostenido','Re','Mi bemol','Mi','Fa','Fa sostenido','Sol','La bemol','La','Si bemol','Si'];
 
 const TYPES = [
@@ -309,7 +322,7 @@ function voicingsFor(rootPC, typeKey){
 /* ---------- diagrama ---------- */
 const XS = i => 55 + i * 42;
 const TOP = 66, FH = 50;
-const OPEN_STR = ['E','A','D','G','B','E'];
+const OPEN_STR = {en:['E','A','D','G','B','E'], es:['Mi','La','Re','Sol','Si','Mi']};
 
 function drawBoard(v){
   const played = v.frets.filter(f => f > 0);
@@ -380,7 +393,7 @@ function drawBoard(v){
 
   // nombres de cuerdas
   for(let i = 0; i < 6; i++){
-    s += `<text x="${XS(i)}" y="${y(5)+26}" text-anchor="middle" font-size="12" fill="#7A6E66" font-family="-apple-system,Helvetica,Arial,sans-serif">${OPEN_STR[i]}</text>`;
+    s += `<text x="${XS(i)}" y="${y(5)+26}" text-anchor="middle" font-size="12" fill="#7A6E66" font-family="-apple-system,Helvetica,Arial,sans-serif">${OPEN_STR[notation][i]}</text>`;
   }
   return s + '</svg>';
 }
@@ -445,16 +458,16 @@ const $ = id => document.getElementById(id);
 
 function build(){
   $('roots').innerHTML = NOTES.map((n,i)=>
-    `<button class="chip" aria-pressed="${i===root}" data-root="${i}">${n}</button>`).join('');
+    `<button class="chip" aria-pressed="${i===root}" data-root="${i}">${nm(i)}</button>`).join('');
   $('typelist').innerHTML = TYPES.map(t=>
     `<button class="chip" aria-pressed="${t.k===type}" data-type="${t.k}">${t.label}</button>`).join('');
 }
 
 function render(){
   const t = TYPES.find(x => x.k === type);
-  $('symbol').innerHTML = NOTES[root] + (t.sfx ? `<span class="q">${t.sfx}</span>` : '');
-  $('spoken').textContent = SPANISH[root] + ' ' + t.word;
-  $('tones').textContent = t.intervals.map(i => NOTES[(root + i) % 12]).join('  ');
+  $('symbol').innerHTML = nm(root) + (t.sfx ? `<span class="q">${t.sfx}</span>` : '');
+  $('spoken').textContent = (notation === 'es' ? NOTES[root] : SPANISH[root]) + ' ' + t.word;
+  $('tones').textContent = t.intervals.map(i => nm((root + i) % 12)).join('  ');
 
   list = voicingsFor(root, type);
   if(idx >= list.length) idx = 0;
@@ -479,6 +492,12 @@ function render(){
 }
 
 document.addEventListener('click', e => {
+  const n = e.target.closest('[data-not]');
+  if(n){
+    notation = n.dataset.not;
+    document.querySelectorAll('[data-not]').forEach(b => b.setAttribute('aria-pressed', b.dataset.not === notation));
+    build(); render(); return;
+  }
   const r = e.target.closest('[data-root]');
   const t = e.target.closest('[data-type]');
   if(r){ root = +r.dataset.root; idx = 0; render(); }
